@@ -3,7 +3,9 @@ Readme
 
 ## Brief introduction to the paper 'Parallel Gaussian process surrogate method to accelerate likelihood-free inference'
 
-**Likelihood-free inference** (LFI) methods such as **approximate Bayesian computation** (ABC) have become a popular approach to fit simulation-based statistical models to observed data when the likelihood function is intractable but forward simulations of the model are feasible. However, a huge amount of forward simulations are typically needed for inference which makes the standard sampling-based likelihood-free inference algorithms infeasible, or at least highly computationally costly, when the forward simulations are expensive. In the paper, a **Gaussian process surrogate model-based framework** is proposed to tackle the problem when the **synthetic likelihood** method is used to estimate the likelihood function from the forward simulations. Emphasis is put on adaptively designing batches of next evaluation locations where to run the simulation model as to make the inference algorithm as sample-efficient as possible -- this is very important when the simulations are expensive. The proposed method is motivated by the recent literature of the related problem of **batch Bayesian optimisation** where -- however -- the goal is to optimise an expensive black-box function while in LFI/ABC setting we are interested in learning the whole posterior distribution. While the focus of the paper is on LFI/ABC scenarios, the proposed methodology applies also more generally. For more details, please see the paper <https://arxiv.org/abs/1905.01252>. 
+**Likelihood-free inference** (LFI) methods such as **approximate Bayesian computation** (ABC) have become a popular approach to fit simulation-based statistical models to observed data when the likelihood function is intractable but forward simulations of the model are feasible. However, a huge amount of forward simulations are typically needed for inference which makes the standard sampling-based likelihood-free inference algorithms infeasible, or at least highly computationally costly, when the forward simulations are expensive. 
+
+In the paper, a **Gaussian process surrogate model-based framework** is proposed to tackle the problem when the **synthetic likelihood** method is used to estimate the likelihood function from the forward simulations. Emphasis is put on adaptively designing batches of next evaluation locations where to run the simulation model to make the inference algorithm as sample-efficient as possible -- this is very important when the simulations are expensive. The proposed method is motivated by recent literature of the related problem of **batch Bayesian optimisation** where -- however -- the goal is to optimise an expensive black-box function while in LFI/ABC setting we are interested in learning the whole posterior distribution. While the focus of the paper is on LFI/ABC scenarios, the proposed methodology applies also more generally. For more details, please see the paper <https://arxiv.org/abs/1905.01252>. 
 
 ## MATLAB code
 
@@ -41,7 +43,7 @@ If you want to try DIRECT or CMAES algorithms for optimising the design criteria
 
 If you have questions or would like to use the provided implementation or methodology for your own inference problem, please contact <marko.j.jarvenpaa@aalto.fi>
 
-## Licence
+## License
 
 This software is distributed under the GNU General Public Licence (version 3 or later); please refer to the file LICENSE.txt for details.
 
