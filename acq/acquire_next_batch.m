@@ -661,8 +661,9 @@ acqs = acqs_all(:);
 
 % Thin to final length (to reduce the save size of the samples-matrix)
 final_cl = min(nfinal,size(samples,1));
-samples = samples(floor(linspace(1,size(samples,1),final_cl)),:);
-acqs = acqs(floor(linspace(1,size(samples,1),final_cl)));
+final_ind = floor(linspace(1,size(samples,1),final_cl));
+samples = samples(final_ind,:);
+acqs = acqs(final_ind);
 
 % Print and plot results to visually examine whether convergence is reached
 if ~strcmp(display_type,'off')
