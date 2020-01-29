@@ -1,4 +1,6 @@
-## Brief introduction to the paper 'Parallel Gaussian process surrogate method to accelerate likelihood-free inference'
+## Brief introduction to the paper 'Parallel Gaussian process surrogate Bayesian inference with noisy likelihood evaluations'
+
+**Note:** The code here is for the v2 of the arxiv paper titled "Parallel Gaussian process surrogate method to accelerate likelihood-free inference". Some minor changes and improvments to the algorithms were done for the current v3 version of the paper. These will be added here soon. 
 
 **Likelihood-free inference** (LFI) methods such as **approximate Bayesian computation** (ABC) have become a popular approach to fit simulation-based statistical models to observed data when the likelihood function is intractable but forward simulations of the model are feasible. However, a huge amount of forward simulations are typically needed for inference which makes the standard sampling-based likelihood-free inference algorithms infeasible, or at least highly computationally costly, when the forward simulations are expensive. 
 
