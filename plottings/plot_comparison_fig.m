@@ -55,7 +55,6 @@ if d == 1
     title('posterior');
     xlim([th_grid.range(1),th_grid.range(2)]);
     hold off;
-
     add_general_title(res);
     
 elseif d == 2
@@ -174,13 +173,13 @@ elseif d == 2
         hold off; box on;
         title('exact posterior');
     end
-
     add_general_title(res);
     
 else
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     %% Plot slices
+    set(gcf,'Position',[50 1000 1600 800]);
     pls = isfield(estim_post.slice,'eloglik');
     k = 1; % height of the plot
     if pls
@@ -192,24 +191,33 @@ else
             plot(th_grid.theta(i,:), estim_post.slice.eloglik(i,:),'-k'); % slice of estimated loglik at true val
             xlim(limsi);
             xlabel(names{i});
+            if i==1
+                ylabel('mean loglik (slice)');
+            end
             
             % second plot row
             subplot(k,d,d+i);
-            plot(th_grid.theta(i,:), estim_post.slice.varloglik(i,:),'-k'); % slice of var of loglik at true val
+            plot(th_grid.theta(i,:), sqrt(max(estim_post.slice.varloglik(i,:),0)),'-k'); % slice of stdev of loglik at true val
             xlim(limsi);
             xlabel(names{i});
+            if i==1
+                ylabel('stdev loglik (slice)');
+            end
             
             % third plot row
             subplot(k,d,2*d+i);
             plot(th_grid.theta(i,:), estim_post.slice.epost(i,:),'-k'); % slice of estimated post at true val
             xlim(limsi);
             xlabel(names{i});
+            if i==1
+                ylabel('estim post (slice)');
+            end
         end
     end
     
     %% Plot posterior marginals (obtained from MCMC&KDE)
     for i = 1:d
-        % third plot row
+        % fourth plot row
         subplot(k,d,k*d-d+i);
         thi = th_grid.theta(i,:);
         hold on;
@@ -226,9 +234,10 @@ else
         add_datapoint_proj_ndplot(theta_tr, nr_init, nr_batch, i); % data point projections
         xlabel(names{i});
         hold off; box on;
+        if i==1
+            ylabel('estim post');
+        end
     end
-    set(gcf,'Position',[50 1000 1600 700]);
-    
     add_general_title(res);
 end
 end
@@ -284,8 +293,6 @@ if nargin == 4 && ~isempty(sim_model.true_theta)
     plot(sim_model.true_theta(1),sim_model.true_theta(2),'+k','MarkerSize',16); % true param
 end
 end
-
-
 
 
 

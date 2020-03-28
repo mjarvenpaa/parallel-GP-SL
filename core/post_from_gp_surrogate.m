@@ -41,6 +41,7 @@ if d <= 2
     % posterior CI (computed from lognormal density)
     post.post_lb = pr_val.*exp(post.loglik_lb - c);
     post.post_ub = pr_val.*exp(post.loglik_ub - c);
+    post.samples = [];
     
 else % dim > 2
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -173,6 +174,7 @@ else % dim > 2
     % Compute marginals in the grid using KDE
     post.epost = kde_for_abc(th_grid,samples,1);
     post.epost = post.epost';
+    post.samples = samples;
 end
 end
 

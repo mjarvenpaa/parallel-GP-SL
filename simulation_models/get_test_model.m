@@ -1,4 +1,4 @@
-function [grid_th,sim_model] = get_test_model(name, noise_stdev, N, data_seed)
+function [grid_th,sim_model,samples] = get_test_model(name, noise_stdev, N, data_seed)
 % Returns settings for different test scenarios with simulator models. 
 %
 % INPUT:
@@ -10,6 +10,8 @@ function [grid_th,sim_model] = get_test_model(name, noise_stdev, N, data_seed)
 % OUTPUT:
 % grid_th: structure for grid-based computations
 % sim_model: structure for various settings etc. related to the simulation model
+% samples: SL posterior samples (returned separately so that they are not redundantly
+% saved to multiple places (if not available, empty matrix is returned))
 
 if nargin < 2
     noise_stdev = [];
@@ -26,6 +28,7 @@ end
 cur_seed = rng;
 rng(data_seed);
 
+samples = [];
 sim_model.N = N;
 if strcmp(name,'gaussian1d')
     % Simple 1d Gaussian test case, similar example as in LFIRE paper
@@ -112,7 +115,7 @@ elseif strcmp(name(1:min(end,9)),'gaussian_')
     end
     
 elseif strcmp(name,'ricker')
-    % Ricker model benchmark problem from literature
+    % Ricker model benchmark problem from literature, 3 parameters
     
     warning off;
     
@@ -124,8 +127,9 @@ elseif strcmp(name,'ricker')
     sim_model.theta_names = {'log(r)','\phi','\sigma_e'};
     sim_model.true_theta = [3.8,10,0.3];
     sim_model.dim = 3;
-    sim_model.gen = @(theta,n) simulate_ricker(theta,1,50); % generate one data set
-    sim_model.n_data = 50; % T
+    T = 50;
+    sim_model.gen = @(theta,n) simulate_ricker(theta,1,T); % generate one data set
+    sim_model.n_data = T;
     sim_model.summary_dim = 13;
     sim_model.comp_summaries = @(data,obs_data) ricker_summstats(data,obs_data);
     
@@ -133,8 +137,8 @@ elseif strcmp(name,'ricker')
     sim_model.data = sim_model.gen(sim_model.true_theta, sim_model.n_data);
     sim_model.summary_true = ricker_summstats(sim_model.data,sim_model.data);
     sim_model.prior_eval = @(theta) ones(size(theta,1),1);
-    sim_model.true_post_pdf = sl_baseline_get(name)';
-    
+    [sim_model.true_post_pdf,samples] = sl_baseline_get(name);
+    sim_model.true_post_pdf = sim_model.true_post_pdf';
     
 elseif strcmp(name(1:min(7,end)),'ricker_')
     % Ricker model where one or two of the parameters are fixed to their 'true' values and
@@ -156,8 +160,9 @@ elseif strcmp(name(1:min(7,end)),'ricker_')
     sim_model.theta_names = nms(i);
     sim_model.true_theta = true_th(i);
     sim_model.dim = length(i);
-    sim_model.gen = @(theta,n) ricker_wrapper(theta,n,i,true_th); % generate one data set
-    sim_model.n_data = 50; % T
+    T = 50;
+    sim_model.gen = @(theta,n) ricker_wrapper(theta,n,i,true_th,T); % generate one data set
+    sim_model.n_data = T;
     sim_model.summary_dim = 13;
     sim_model.comp_summaries = @(data,obs_data) ricker_summstats(data,obs_data);
     
@@ -170,7 +175,6 @@ elseif strcmp(name(1:min(7,end)),'ricker_')
     else
         sim_model.true_post_pdf = [];
     end
-    
     
 elseif strcmp(name,'simple2d')
     % Simple 2d toy model where an exact but noisy log lik estimate can be computed
@@ -239,7 +243,67 @@ elseif strcmp(name,'bimodal2d')
     sim_model.prior_eval = @(theta) ones(size(theta,1),1);
     sim_model.true_post_pdf2d = exp(log_bimodal_pdf(grid_th.theta2d'));
     
+    %#####################################################################################
+elseif strcmp(name,'simple6d')
+    % Simple 2d toy model where an exact but noisy log lik estimate can be computed
     
+    d = 6;
+    grid_th = theta_grid(repmat([-16,16],d,1),200);
+    
+    sim_model.N = NaN; % for SL
+    sim_model.name = ['Simple (',num2str(d),'D)'];
+    sigma_n = noise_stdev;
+    sigmaf = @(theta)sigma_n*ones(size(theta,1),1); % constant noise
+    
+    sim_model.true_theta = ones(1,d);
+    sim_model.dim = d;
+    
+    sim_model.loglik_2d = @log_simple_pdf;
+    sim_model.loglik_eval = @(theta) log_pdf_nd(theta,@log_simple_pdf,d) + sigmaf(theta).*randn(size(theta,1),1);
+    sim_model.prior_eval = @(theta) ones(size(theta,1),1);
+    [sim_model.true_post_pdf,samples] = high_dim_toy_model_inference(grid_th, sim_model);
+    
+elseif strcmp(name,'banana6d')
+    % Simple 2d toy model where an exact but noisy log lik estimate can be computed
+    
+    d = 6;
+    grid_th = theta_grid(repmat(2*[-3,3;-10,1],d/2,1),200);
+    
+    sim_model.N = NaN; % for SL
+    sim_model.name = ['Banana (',num2str(d),'D)'];
+    ab = [1,1];
+    sigma_n = noise_stdev;
+    sigmaf = @(theta)sigma_n*ones(size(theta,1),1); % constant noise
+
+    sim_model.true_theta = repmat([0, -ab(1)^2*ab(2)],1,d/2);
+    sim_model.dim = d;
+    
+    log_pdf = @(theta) log_banana_pdf(theta,ab);
+    sim_model.loglik_2d = log_pdf;
+    sim_model.loglik_eval = @(theta) log_pdf_nd(theta,log_pdf,d) + sigmaf(theta).*randn(size(theta,1),1);
+    sim_model.prior_eval = @(theta) ones(size(theta,1),1);
+    [sim_model.true_post_pdf,samples] = high_dim_toy_model_inference(grid_th, sim_model);
+
+elseif strcmp(name,'bimodal6d')
+    % Simple 2d toy model where an exact but noisy log lik estimate can be computed
+    
+    d = 6;
+    grid_th = theta_grid(repmat(2*[-3,3],d,1),200);
+    
+    sim_model.N = NaN; % for SL
+    sim_model.name = ['Bimodal (',num2str(d),'D)'];
+    sigma_n = noise_stdev;
+    sigmaf = @(theta)sigma_n*ones(size(theta,1),1); % constant noise
+
+    sim_model.true_theta = repmat([0, sqrt(2)],1,d/2);
+    sim_model.dim = d;
+    
+    sim_model.loglik_2d = @log_bimodal_pdf;
+    sim_model.loglik_eval = @(theta) log_pdf_nd(theta,@log_bimodal_pdf,d) + sigmaf(theta).*randn(size(theta,1),1);
+    sim_model.prior_eval = @(theta) ones(size(theta,1),1);
+    [sim_model.true_post_pdf,samples] = high_dim_toy_model_inference(grid_th, sim_model);
+    
+    %#####################################################################################
 elseif strcmp(name,'cell_model')
     % Cell biology model from Bayesian synthetic likelihood paper
     % NOTE: We use the data from the paper.
@@ -309,7 +373,7 @@ elseif strcmp(name,'gk_model')
         sim_model.gen = @(theta,n) simulate_gandk(length(y),[theta,1,2,0.5]); % generate one data set
         sim_model.summary_dim = 4;
     else
-        sim_model.true_theta = [2.99,1,2.08,0.5]; 
+        sim_model.true_theta = [3,1,2,0.5]; % was initially [2.99,1,2.08,0.5] which was rough estimate based on the figure
         sim_model.dim = 4;
         sim_model.gen = @(theta,n) simulate_gandk(length(y),theta); % generate one data set
         sim_model.summary_dim = 4;
@@ -320,7 +384,8 @@ elseif strcmp(name,'gk_model')
     sim_model.data = []; % NOTE: true data is always used and loaded from file
     sim_model.summary_true = [0,0,0,0];
     sim_model.prior_eval = @(theta) ones(size(theta,1),1);
-    sim_model.true_post_pdf = sl_baseline_get(name)';
+    [sim_model.true_post_pdf,samples] = sl_baseline_get(name);
+    sim_model.true_post_pdf = sim_model.true_post_pdf';
     
 elseif strcmp(name,'lorenz')
     % Lorenz model benchmark problem, 2 parameters, matlab code from LFIRE paper
@@ -384,24 +449,24 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Helper functions for the test simulation models:
 
-function post = sl_baseline_get(model_name)
+function [post,samples] = sl_baseline_get(model_name)
 % Loads the baseline MCMC-SL results computed elsewhere using extensive simulations. 
 fn = ['../results/sl_baseline/',model_name,'_run1.mat'];
 try
-    load(fn,'post_kde');
-    post = post_kde;
+    load(fn,'post_kde','sl_samples');
+    post = post_kde; samples = sl_samples;
 catch
-    error('Baseline posterior could not be loaded.');
-    %warning('Baseline posterior could not be loaded.');
-    post = []; % if the precomputed baseline posterior is not found
+    %error('Baseline posterior could not be loaded.');
+    warning('Baseline posterior could not be loaded.');
+    post = []; samples = []; % if the precomputed baseline posterior is not found
 end
 end
 
 
-function s = ricker_wrapper(theta,n,i,true_th)
+function s = ricker_wrapper(theta,n,i,true_th,T)
 theta_full = true_th;
 theta_full(i) = theta;
-s = simulate_ricker(theta_full,1,50);
+s = simulate_ricker(theta_full,1,T);
 end
 
 
@@ -416,6 +481,7 @@ theta_full = true_th;
 theta_full(i) = theta;
 llik = ricker_synloglik(theta_full,n,data,burnIn,N,id);
 end
+
 
 function lp = log_simple_pdf(theta)
 % Evaluates log pdf of a simple, Gaussian-like distribution which small correlation.
@@ -459,6 +525,43 @@ S = [1 rho; rho 1];
 invS = inv(S);
 y = [theta(:,1), theta(:,2).^2 - 2];
 lp = -0.5*sum(y*invS.*y,2);
+end
+
+
+function lp = log_pdf_nd(theta,log_pdf,d)
+% Evaluates log pdf of the multidim test problem which are constructed from the 2D test
+% problems. 
+
+lp = 0;
+for i = 1:(d/2)
+    ind = (i-1)*2+1;
+    lp = lp + log_pdf(theta(:,ind:(ind+1)));
+end
+end
+
+function [true_post_pdf,samples] = high_dim_toy_model_inference(grid_th, sim_model)
+% Inference for obtaining baseline i.e. ground truth posterior for the multidim toy
+% problems. In principle we could just use pseudo-marginal MCMC but as the toy problems
+% are constructed from dim/2 independent 2D densities, we here take advantage of that.
+%
+% NOTE: The seed is always fixed so the Monte Carlo error is always the same.
+
+% we sample exactly (under a grid assumption) from each 2d block
+n = 10000;
+d = sim_model.dim;
+grid2dm = theta_grid(grid_th.range(1:2,:),100); % same for each 2d block
+loglik2dm = sim_model.loglik_2d(grid2dm.theta2d');
+lik2dm = exp(loglik2dm-max(loglik2dm));
+samples = NaN(n,d);
+for i = 1:(d/2)
+    ind = (i-1)*2+1;
+    sampled_ind = randsample(1:numel(lik2dm),n,true,lik2dm);
+    samples(:,ind:(ind+1)) = grid2dm.theta2d(:,sampled_ind)'; 
+    % TODO: could also add some jitter because of the grid approximation
+end
+
+% compute marginals in the grid
+true_post_pdf = kde_for_abc(grid_th,samples)';
 end
 
 

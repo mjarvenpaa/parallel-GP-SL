@@ -81,6 +81,7 @@ for iter = 1:nr_iter
         if return_lvl >= 2 && other_opt.res_ind(end)==iter
             % save also the final model-based posterior estimate!
             res_i.estim_post = estim_post.epost;
+            res_i.samples = estim_post.samples;
         end
         results.iter{iter} = res_i;
     end
@@ -97,6 +98,19 @@ for iter = 1:nr_iter
         if other_opt.viz_save
             fn = [other_opt.output_folder,'/',other_opt.output_filename,'_iter',num2str(iter),'res'];
             my_export_fig(fn,'-transparent','-pdf');
+        end
+        
+        if 1 && sim_model.dim > 2 && isfield(sim_model,'samples')
+            % plot bivariate marginals to separate plots
+            figure(2);
+            set(gcf,'Position',[50 1000 800 800]);
+            bivariate_marginals_plot(th_grid,sim_model,estim_post.samples, estim_post.epost');
+            suptitle('estimated');
+            figure(3);
+            set(gcf,'Position',[1050 1000 800 800]);
+            bivariate_marginals_plot(th_grid,sim_model,sim_model.samples, sim_model.true_post_pdf');
+            suptitle('true');
+            drawnow;
         end
     end
 end
