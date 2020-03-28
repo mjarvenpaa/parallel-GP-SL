@@ -48,7 +48,6 @@ else % grid not used and/or dim > 2
     options.updatesigma = 0;
     options.verbosity = 0; % no printing from mcmc
     options.waitbar = 0;
-    %options.burnintime = 1000; % what is this number actually here?
     
     % Initialize results
     samples_all = NaN(mcmc_opt.nsimu,npar,mcmc_opt.nchains);

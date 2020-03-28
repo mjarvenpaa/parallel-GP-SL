@@ -52,19 +52,21 @@ estim_post = post_from_gp_surrogate(grid_th,sim_model,gp,gp_opt,loglik_tr,th_tr,
 
 %% plot everything
 figure(1);
-set(gcf,'Position',[40 40 900 350]);
+set(gcf,'Position',[40 40 900 300]);
+
+lw = 0.8; % linewidth, matlab default 0.5
 
 % 1/2: gp on loglik
 subplot(1,2,1);
 thx = grid_th.theta;
 my_shadedplot(thx, estim_post.loglik_lb, estim_post.loglik_ub, 0.8*[1,1,1], [1,1,1]); % loglik uncertainty
 hold on;
-plot(thx,estim_post.eloglik,'-r'); 
+plot(thx,estim_post.eloglik,'-r','Linewidth',lw); 
 plot(th_tr,loglik_tr,'k.','MarkerSize',10); 
 if 1
     % plot 'errorbars' of the loglik observations
     for i = 1:t
-        plot(th_tr(i)*[1 1],loglik_tr(i)+[1 -1]*1.96*sigma_tr(i),'-k');
+        plot(th_tr(i)*[1 1],loglik_tr(i)+[1 -1]*1.96*sigma_tr(i),'-k','Linewidth',0.6);
     end
 end
 hold off;
@@ -80,10 +82,10 @@ title('(a)');
 subplot(1,2,2);
 my_shadedplot(thx, estim_post.post_lb, estim_post.post_ub, 0.8*[1,1,1], [1,1,1]); % post uncertainty
 hold on; 
-plot(thx,estim_post.epost,'-r'); % median 
+plot(thx,estim_post.epost,'-r','Linewidth',lw); % median 
 if 1
     % plot variance as an additional curve
-    plot(thx,sqrt(estim_post.varpost),'b--');
+    plot(thx,sqrt(estim_post.varpost),'b--','Linewidth',lw);
     % plot IQR as an additional curve?
     % ...
 end

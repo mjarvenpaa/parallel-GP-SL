@@ -1,8 +1,7 @@
 function [llik,bootvar] = noisy_loglik_estim(sim_model,opt,theta,method,use_boot)
 % Computes a noisy log likelihood estimate by simulating N datasets and using SL 
 % approximation. Also estimate of the variance of the lik value can be computed using the
-% bootstrap. 
-% TODO: LFIRE
+% bootstrap.
 
 if nargin < 4
     method = 'sl';
@@ -31,6 +30,10 @@ end
 % compute SL or LFIRE log-likelihood value
 if ~strcmp(method,'lfire')
     llik = eval_sl_loglik(sim_model.summary_true, summaries_th, opt.estimator);
+    if ~isfinite(llik)
+        msg = ['SL computation resulted non-finite value at ', num2str(theta(:)')];
+        error(msg);
+    end
     
     if use_boot && nargout > 1
         % uses bootstrap to compute estimate of the variance of the loglik estimate
@@ -41,7 +44,18 @@ if ~strcmp(method,'lfire')
             s_thi = summaries_th(:,boot_inds);
             llik_boot(i) = eval_sl_loglik(sim_model.summary_true, s_thi, opt.estimator);
         end
-        bootvar = var(llik_boot); % use robust estimate here instead?
+        llik_boot = llik_boot(~isnan(llik_boot));
+        if isfield(opt,'robust_bootvar') && opt.robust_bootvar == 1
+            % use 1.48*MAD as a robust estimator for standard deviation:
+            % (multiplication with 1.48 comes from a Gaussian assumption)
+            bootvar = (1.48*median(abs(llik_boot-median(llik_boot))))^2;
+        else
+            bootvar = var(llik_boot);
+        end
+        if ~isfinite(bootvar)
+            msg = ['Computing bootstrapped variance of SL failed at ', num2str(theta(:)')];
+            error(msg);
+        end
         
         if 0
             % show bootstrap samples
@@ -59,8 +73,8 @@ else % lfire
 end
 
 
-%% Some individual possibly very large loglik values occurring near some boundaries can 
-%% make fitting the GP problematic so we deal with those cases by lower bounding the loglik
+%% The magnitude of the log-likelihood near boundaries can be large for some models which
+%% can make fitting the GP problematic. We deal with such cases by lower bounding the loglik
 %trunclik = -Inf;
 trunclik = -10^5;
 llik = max(trunclik,llik);
@@ -68,9 +82,6 @@ bootvar(llik<=trunclik) = 100^2;
 %llik = soft_loglik_lb(llik);
 
 end
-
-
-
 
 
 

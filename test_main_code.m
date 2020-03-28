@@ -8,9 +8,9 @@ seed = 12345;
 rng(seed);
 
 %% main settings
-nr_init = 15; % number of initial locations (generated uniformly)
-nr_iter = 50; % number of iterations of the algorithm
-batch_size = 4; % batch size
+nr_init = 20; % number of initial locations (generated uniformly)
+nr_iter = 41; % number of iterations of the algorithm
+batch_size = 5; % batch size
 graphics_on = 2; % interactive plotting: plot only final result=1 / plot after each batch=2 / plot all and pause=3 / compute estimates but no plotting=-1 (for cluster)
 
 
@@ -22,11 +22,14 @@ graphics_on = 2; % interactive plotting: plot only final result=1 / plot after e
 %[grid_th,sim_model] = get_test_model('ricker_12',[],500); 
 %[grid_th,sim_model] = get_test_model('ricker',[],100);
 %[grid_th,sim_model] = get_test_model('simple2d',2,[]);
-[grid_th,sim_model] = get_test_model('banana2d',1,[]);
-%[grid_th,sim_model] = get_test_model('bimodal2d',0.5,[]);
-%[grid_th,sim_model] = get_test_model('gk_model',[],500);
+[grid_th,sim_model] = get_test_model('banana2d',2,[]);
+%[grid_th,sim_model] = get_test_model('bimodal2d',2,[]);
+%[grid_th,sim_model,samples] = get_test_model('simple6d',2,[]);
+%[grid_th,sim_model,samples] = get_test_model('banana6d',2,[]);
+%[grid_th,sim_model,samples] = get_test_model('bimodal6d',2,[]);
+%[grid_th,sim_model] = get_test_model('gk_model',[],100);
 %[grid_th,sim_model] = get_test_model('lorenz',[],100);
-%[grid_th,sim_model] = get_test_model('ma2',[],20);
+%[grid_th,sim_model] = get_test_model('ma2',[],100);
 
 
 %% GP settings
@@ -59,14 +62,14 @@ acq_opt.direct.maxits = 100; % max. number of iterations  (default is 10)
 acq_opt.direct.maxdeep = 100; % max. number of rect. divisions (default is 100)
 acq_opt.exp.is_samples = 500; % how many samples from the importance distribution 
 acq_opt.exp.nr_grid.dim1 = 100; % number of grid points for grid integration
-acq_opt.exp.nr_grid.dim2 = 50;
+acq_opt.exp.nr_grid.dim2 = 70;
 acq_opt.display_type = 'off';
 
 
 %% MCMC settings (for sampling from GP-based posterior when dim > 2, grid-based computations always used when dim <= 2)
 mcmc_opt.nchains = 5; % how many chains
-mcmc_opt.nsimu = 10000; % how many samples for each chain
-mcmc_opt.nfinal = 5000; % final amount of samples after concatenating the chains and thinning
+mcmc_opt.nsimu = 20000; % how many samples for each chain
+mcmc_opt.nfinal = 10000; % final amount of samples after concatenating the chains and thinning
 mcmc_opt.display_type = 'on';
 
 
@@ -78,7 +81,7 @@ if isfield(sim_model,'loglik_eval')
 end
 lik_opt.sl.estimator = 'sl'; % which SL estimator: 'sl', 'ubsl', 'ublogsl'
 lik_opt.sl.N = sim_model.N; % number of repeated samples computing SL at each evaluation location
-
+lik_opt.sl.robust_bootvar = 1; % if 1 uses robust variance estimator in bootstrap 
 
 %% other misc settings
 other_opt.res_ind = 1:10:nr_iter; % iterations when to compute TV/KL if cluster computation
@@ -96,8 +99,12 @@ if use_profiler
     profile on;
 end
 
+if exist('samples','var')
+    sim_model.samples = samples;
+end
+
 %% run the main algorithm
-[results] = run_algorithm(nr_init, nr_iter, batch_size, graphics_on, grid_th, sim_model, ...
+results = run_algorithm(nr_init, nr_iter, batch_size, graphics_on, grid_th, sim_model, ...
     gp_opt, acq_opt, mcmc_opt, lik_opt, other_opt);
 
 if use_profiler

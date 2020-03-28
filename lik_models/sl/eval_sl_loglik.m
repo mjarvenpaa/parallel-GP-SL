@@ -4,6 +4,7 @@ function log_val = eval_sl_loglik(obs_summary, simul_summaries, estimator)
 % N == dim of repeated samples at proposed theta, second dim of simul_summaries
 
 [d,N] = size(simul_summaries);
+jitter = 1e-9;
 
 if strcmp(estimator,'sl')
     % log of (standard) SL
@@ -12,7 +13,6 @@ if strcmp(estimator,'sl')
     end
     
     use_robust_vcov = 0;
-    
     if use_robust_vcov
         [Sigma,invSigma,muhat,logdetSd2] = robust_vcov(simul_summaries);
         dx = obs_summary(:) - muhat(:);
@@ -24,7 +24,6 @@ if strcmp(estimator,'sl')
         %ml_cov = robustcov(simul_summaries');
         dx = obs_summary(:) - ml_mean(:);
         
-        jitter = 1e-12;
         ml_cov = ml_cov + jitter*eye(size(ml_cov));
         
         log_val = -0.5*(logdet(ml_cov) + dx'*(ml_cov\dx) + d*log(2*pi));
@@ -44,7 +43,6 @@ elseif strcmp(estimator,'ubsl')
     ml_cov = cov(simul_summaries');
     dx = obs_summary(:) - ml_mean(:);
     
-    jitter = 1e-12;
     ml_cov = ml_cov + jitter*eye(size(ml_cov));
     
     Mn = (N-1)*ml_cov;
@@ -52,7 +50,7 @@ elseif strcmp(estimator,'ubsl')
 
     [~,p] = chol(arg_phi);
 
-    if (p == 0) % positive definite
+    if p == 0 % positive definite
         log_val = -d/2*log(2*pi) + ckv(d,N-2) - ckv(d,N-1) - d/2*log(1-1/N) ...
             - (N-d-2)/2*logdet(Mn) + (N-d-3)/2*logdet(arg_phi);
     else % not positive definite => value 0, log value -inf
@@ -70,6 +68,8 @@ else
     ml_cov = cov(simul_summaries');
     dx = obs_summary(:) - ml_mean(:);
     
+    ml_cov = ml_cov + jitter*eye(size(ml_cov));
+    
     log_val = -d/2*log(2*pi) - 0.5*(logdet(ml_cov) + d*log((N-1)/2) ...
         - sum(psi((N-(1:d))/2)) + (N-d-2)/(N-1)*(dx'*(ml_cov\dx)) - d/N);
 end
@@ -79,8 +79,12 @@ end
 
 function ld = logdet(A)
 % Compute log of the determinant using Cholesky
-U = chol(A);
-ld = 2*sum(log(diag(U)));
+[U,p] = chol(A);
+if p ~= 0 % Cholesky failed; matrix not positive definite
+    ld = NaN;
+else
+    ld = 2*sum(log(diag(U)));
+end
 end
 
 

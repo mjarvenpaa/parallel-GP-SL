@@ -9,9 +9,7 @@ n_grid = 1000;
 x_grid = linspace(-4,12,n_grid)';
 
 for i = 1:2
-    
     if i == 1
-        % THIS CASE DEMONSTRATES THE THEORETICAL RESULT!
         n = 3;
         x_tr0 = -200+[0,1,2]'; % code doesn't work without some initial evals so avoid the difficulty this way
         x_tr1 = 0;
@@ -19,23 +17,11 @@ for i = 1:2
         ms2 = 5^2;
         l = 2.5;
         sn2 = .005^2;
-    elseif 0
-        % NICE ILLUSTRATION!
-        n = 3;
-        x_tr0 = -200+[0,1,2]';
-        x_tr1 = 2;
-        x_tr2 = 5;
-        ms2 = 5^2;
-        l = 2;
-        sn2 = 1^2;
     elseif i == 2
-        rng(123456);
         n = 4;
-        % TESTING
-        %x_tr0 = min(x_grid)+(max(x_grid)-min(x_grid))*rand(n,1);
         x_tr0 = [-1,1,2, -2]';
-        x_tr1 = 0.25; %min(x_grid)+(max(x_grid)-min(x_grid))*rand(1,1);
-        x_tr2 = 4; %min(x_grid)+(max(x_grid)-min(x_grid))*rand(1,1);
+        x_tr1 = 0.25; 
+        x_tr2 = 4; 
         ms2 = 5^2;
         l = 2;
         sn2 = 2^2;
@@ -71,23 +57,27 @@ for i = 1:2
     
     
     jitter = 1; % add some jitter so that the curves can be better seen
-    dj = 0.0075;
+    dj = 0.03;
+    lw = 1; % linewidth, matlab default 0.5
     
     %% plot
     figure(1);
     subplot(1,2,i);
     hold on;
-    h1(5) = plot(x_grid, s2_12_sep, '-g');
-    h1(1) = plot(x_grid, s20 + jitter*dj, '-k');
-    h1(2) = plot(x_grid, s2_1 + jitter*2*dj, '-r');
-    h1(3) = plot(x_grid, s2_2 + jitter*3*dj, '--r');
-    h1(4) = plot(x_grid, s2_12 + jitter*4*dj, '-b');
+    % lines:
+    y_col = [93 69 12]/100; % better yellow color
+    h1(5) = plot(x_grid, s2_12_sep, 'color', y_col,'Linewidth',lw);
+    h1(1) = plot(x_grid, s20 + jitter*4*dj, '-k','Linewidth',lw);
+    h1(4) = plot(x_grid, s2_12 + jitter*1*dj, '-b','Linewidth',lw);
+    h1(2) = plot(x_grid, s2_1 + jitter*2*dj, '-r','Linewidth',lw);
+    h1(3) = plot(x_grid, s2_2 + jitter*3*dj, '--r','Linewidth',lw);
     lm = [0,max(s20)*1.05];
     ylim(lm);
     
-    gray_col = 0.75*[1 1 1];
-    plot(x_tr1*[1 1], lm, 'color',gray_col);
-    plot(x_tr2*[1 1], lm, 'color',gray_col);
+    % gray vertical lines and evaluation locations:
+    gray_col = 0.75*[1 1 1]; % gray color
+    plot(x_tr1*[1 1], lm, 'color',gray_col,'Linewidth',lw);
+    plot(x_tr2*[1 1], lm, 'color',gray_col,'Linewidth',lw);
     plot(x_tr1, lm(1), '*k' ,'MarkerSize',7,'Linewidth',1.2); % obs. 1
     plot(x_tr2, lm(1), '*k' ,'MarkerSize',7,'Linewidth',1.2); % obs. 2
     plot(x_tr0, lm(1)*ones(size(x_tr0)), 'xk','MarkerSize',7,'Linewidth',1.2); % initial observations
@@ -105,7 +95,7 @@ for i = 1:2
             },'Location','Southeast');
         %'s_0^2(\theta){}-{}\Delta{}s_0^2(\theta;\theta_1^{\ast}){}-{}\Delta{}s_0^2(\theta;\theta_2^{\ast})'...
     end
-    set(gcf,'Position',[50 50 1100 350]);
+    set(gcf,'Position',[50 50 1000 340]);
     if i == 1
         title('(a)');
     elseif i == 2

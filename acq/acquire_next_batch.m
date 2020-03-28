@@ -363,18 +363,10 @@ function P = acq_greedy_precompute(gp,th_tr,y_tr,sigma_tr,th_pend,P)
 % a time. 
 
 cov_new = gp_pred_cov_fast(gp,th_tr,y_tr,th_pend,th_pend,P,0);
-
-% Sometimes the greedy variance method evaluates a lot near previous points and this appears to
-% make the covariance matrix below almost non-positive definite. As a solution for this, we
-% suppose new points are observed with negligible but higher than the initial default tol=
-% 1e-9 noise value.
-tols = [1e-9 1e-8 1e-7 1e-6 1e-5 1e-4 1e-3]; 
-for tol = tols
-    cov_new = cov_new + gp_noise_model_var(gp,th_tr,sigma_tr,1,tol) * eye(size(cov_new));
-    [P.L_new,p] = chol(cov_new,'lower'); 
-    if p == 0
-        return; % chol succeeded
-    end
+cov_new = cov_new + gp_noise_model_var(gp,th_tr,sigma_tr) * eye(size(cov_new));
+[P.L_new,p] = chol(cov_new,'lower');
+if p == 0
+    return; % chol succeeded
 end
 error('Could not invert the L_new covariance matrix.');
 end
@@ -399,7 +391,6 @@ end
 m_tpp = eft;
 var_tpp = varft;
 
-%nlogexpV = -2*log(pr_val) - 2*m_tpp + var_tpp - tau_tpp; % old, incorrect formula
 nlogexpV = -2*log(pr_val) - 2*(m_tpp + var_tpp) - log1p(-exp(tau_tpp-var_tpp));
 
 nlogexpV = real(nlogexpV); % ensure output is real valued just in case
@@ -480,7 +471,6 @@ else
     m = max(log_w_is1);
     %log_w_is = log_w_is1 - m - log(sum(exp(log_w_is1 - m)));
     w_is1 = exp(log_w_is1 - m)/sum(exp(log_w_is1 - m)); % use logsumexp-trick
-    %min_is = min(w_is1)
     
     % If the sampling fails, 0 values can occur here, this is an ad-hoc solution
     % for that. This is essentially the idea in the paper 'Truncated importance sampling'
@@ -510,7 +500,11 @@ else
             ylim([th_grid.range(2,1), th_grid.range(2,2)]);
             set(gcf,'Position',[800 50 600 250]);
         else
-            pts=th_is'
+            %pts=th_is'
+            max(w_is), min(w_is)
+            ww = sort(w_is);
+            ww(end-10:end)
+            nr_uniq_ws = length(unique(w_is))
             %pause;
         end
         drawnow;
@@ -605,7 +599,6 @@ options.method = 'am';
 options.updatesigma = 0;
 options.verbosity = ~strcmp(display_type,'off'); % no printing from mcmc
 options.waitbar = 0;
-%options.burnintime = 1000; % what is this number actually here?
 
 % Initialize results
 samples_all = NaN(options.nsimu,npar,nchains);

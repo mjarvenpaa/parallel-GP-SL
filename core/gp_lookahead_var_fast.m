@@ -21,7 +21,23 @@ if is_pend ~= 1
     cov_new = gp_pred_cov_fast(gp,x_tr,y_tr,x_new,x_new,P,0);
     
     cov_new = cov_new + gp_noise_model_var(gp, x_tr, sigma_tr) * eye(size(cov_new));
-    L_new = chol(cov_new,'lower');
+    [L_new,p] = chol(cov_new,'lower');
+    if p ~= 0
+        % In some rare cases, chol failed here although, mathematically, this shouldn't 
+        % happen because the evaluations are noisy. If this still happens, we try again
+        % after adding some jitter.
+        tols = [1e-9, 1e-6, 1e-4, 1e-3];
+        for tol = tols
+            cov_new1 = cov_new + tol * eye(size(cov_new));
+            [L_new,p] = chol(cov_new1,'lower');
+            if p == 0
+                break;
+            end
+            if tol == tols(end)
+                error('Computing L_new failed in gp_lookahead_var_fast.');
+            end
+        end
+    end
     
     cov_snew = gp_pred_cov_fast(gp,x_tr,y_tr,x_s,x_new,P,1);
     cov_news = cov_snew';
