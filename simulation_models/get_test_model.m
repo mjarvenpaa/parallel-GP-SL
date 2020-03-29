@@ -470,19 +470,6 @@ s = simulate_ricker(theta_full,1,T);
 end
 
 
-function s = ricker_wrapperR(theta,n,i,true_th)
-theta_full = true_th;
-theta_full(i) = theta;
-s = simulateRicker(theta_full,50,50,1,'id1');
-end
-
-function llik = ricker_synloglik_wrapperR(theta,n,data,burnIn,N,id,i,true_th)
-theta_full = true_th;
-theta_full(i) = theta;
-llik = ricker_synloglik(theta_full,n,data,burnIn,N,id);
-end
-
-
 function lp = log_simple_pdf(theta)
 % Evaluates log pdf of a simple, Gaussian-like distribution which small correlation.
 
