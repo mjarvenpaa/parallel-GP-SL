@@ -1,20 +1,18 @@
 ## Brief introduction to the paper 'Parallel Gaussian process surrogate Bayesian inference with noisy likelihood evaluations'
 
-**Note:** The code here is for the v2 of the arxiv paper titled "Parallel Gaussian process surrogate method to accelerate likelihood-free inference". Some minor changes and improvments to the algorithms were done for the current v3 version of the paper. These will be added here soon. 
+**Likelihood-free inference** (LFI) methods such as **approximate Bayesian computation** (ABC) are used to fit simulation-based statistical models to observed data when the likelihood function is intractable but forward simulations of the model are feasible. However, a huge amount of forward simulations are typically needed for inference which makes the standard sampling-based LFI algorithms infeasible, or at least very expensive, when the forward simulations are costly. 
 
-**Likelihood-free inference** (LFI) methods such as **approximate Bayesian computation** (ABC) have become a popular approach to fit simulation-based statistical models to observed data when the likelihood function is intractable but forward simulations of the model are feasible. However, a huge amount of forward simulations are typically needed for inference which makes the standard sampling-based likelihood-free inference algorithms infeasible, or at least highly computationally costly, when the forward simulations are expensive. 
-
-In the paper, a **Gaussian process surrogate model-based framework** is proposed to tackle the problem when the **synthetic likelihood** method is used to estimate the likelihood function from the forward simulations. Emphasis is put on adaptively designing batches of next evaluation locations where to run the simulation model to make the inference algorithm as sample-efficient as possible -- this is very important when the simulations are expensive. The proposed method is motivated by recent literature of the related problem of **batch Bayesian optimisation** where -- however -- the goal is to optimise an expensive black-box function while in LFI/ABC setting we are mainly interested in learning the whole posterior distribution. While the focus of the paper is on LFI/ABC scenarios, the proposed methodology can be used more generally. For more details, please see the paper preprint <https://arxiv.org/abs/1905.01252>. 
+In the paper, a **Gaussian process surrogate model-based framework** is proposed to tackle the problem when the **synthetic likelihood** method is used for obtaining noisy evaluations of the likelihood function using repeated forward simulations. Emphasis is put on adaptively designing batches of next evaluation locations where to run the simulation model to make the inference algorithm as sample-efficient as possible -- this is very important when the simulations are expensive. The proposed method is motivated by recent literature of the related problem of **batch Bayesian optimisation** where -- however -- the goal is to optimise an expensive black-box function while in LFI/ABC setting we are mainly interested in learning the whole posterior distribution. While the focus of the paper is on LFI, the proposed methodology can be used more generally -- whenever expensive and potentially noisy evaluations of the likelihood function can only be computed. For more details, please see the paper <https://arxiv.org/abs/1905.01252>. 
 
 ## MATLAB code
 
 This repository contains an implementation of the inference algorithm used in the paper <https://arxiv.org/abs/1905.01252>. Also scripts for drawing all the illustrative figures in the paper are provided. The implementation contains also some extra features not used in the paper (e.g. alternative optimisation methods of the design criteria) which are, however, not carefully tested. 
 
-Note that this implementation is provided mainly to demonstrate the promise of the method with simulation models that are realistic, yet relatively fast to simulate, so that reasonable baselines are available for careful assessment of the estimation accuracy. To use the proposed method with truly costly simulation models, proper parallellisation needs to be implemented. For this purpose, a python implementation to the likelihood-free inference software package ELFI (<https://github.com/elfi-dev/elfi>) is being planned. 
+Note that the implementation is provided mainly to demonstrate the promise of the method with simulation models that are realistic, yet relatively fast to simulate, so that reasonable baselines are available for careful assessment of the estimation accuracy. To use the proposed method with truly costly simulation models, proper parallellisation needs to be implemented. For this purpose, a python implementation to the likelihood-free inference software package ELFI (<https://github.com/elfi-dev/elfi>) is being planned. 
 
 ## Getting started
 
-Check out and run the file `test_main_code`. The files in the main folder starting with `demo_` can be used to draw the figures of the paper and for some further illustrations.
+Check out and run the file `test_main_code`. The files in the main folder starting with `demo_` can be used to draw the figures of the paper and additional illustrations.
 
 ## Installation and external code
 
@@ -35,12 +33,13 @@ If you want to try DIRECT or CMAES algorithms for optimising the design criteria
 ## Ideas for possible extensions/improvements
 
 * Include support for the LFIRE method introduced in the paper "Likelihood-free inference by ratio estimation" <https://arxiv.org/abs/1611.10242>
-* The current implementation is designed for the LFI set-up where one has access only to noisy log-likelihood evaluations via the synthetic likelihood method. However, the proposed method also works (possibly after some minimal changes to the GP model) in scenarios where one has access to exact -- but potentially expensive -- black-box likelihood evaluations. The performance of the proposed design criteria (aka acquisition functions) could be investigated in this setting. 
+* The current implementation is designed mainly for the LFI set-up where one has access to noisy log-likelihood evaluations via the synthetic likelihood method. However, the proposed method also works (possibly after some minimal changes to the GP model) in scenarios where one has access to exact -- but potentially expensive -- black-box likelihood evaluations. The performance of the proposed design criteria (aka acquisition functions) could be investigated in this setting. 
 * While the computation time of the design criteria is negligible as compared to the usual run-times of many real-world simulation models for which the methodology is particularly useful, approaches for more efficient design of simulation locations could be investigated. The main challenge is that IMIQR and EIV require integration over the parameter space which cannot be calculated analytically. 
+* The log-likelihood function can become very small or behave non-smoothly near the boundaries of the parameter space of some simulation models. This can cause challenges in GP fitting. Principled ways to avoid such challenges could be investigated. Similarly, models with high-dimensional parameter space can be challenging for the algorithm. 
 
 ## Support
 
-If you have questions or would like to use the provided implementation or methodology for your own inference problem, please contact <marko.j.jarvenpaa@aalto.fi>
+If you have questions or would like to use the provided implementation or methodology for your own inference problem, please contact <m.j.jarvenpaa@medisin.uio.no>
 
 ## License
 
